@@ -1,8 +1,10 @@
+from time import sleep, time
 from pymongo import MongoClient, collection
 import urllib.parse
 import pymongo
-from steam_api_extract import get_review_updates_for_app_id
+from steam_api_extract import extract_reviews
 from credentials import credentials
+import json 
 
 credentials = credentials()
 
@@ -23,6 +25,6 @@ def get_reviews_for_each_game():
                 name = game['name']
                 appid = game['appid']
                 last_review_retrieved = game['last_review_retrieved']
-                reviews = get_review_updates_for_app_id(appid, last_review_retrieved)
-    
-    return appid, reviews
+                reviews_list = extract_reviews(appid, last_review_retrieved)
+                
+    return reviews_list

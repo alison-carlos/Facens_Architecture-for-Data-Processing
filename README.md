@@ -17,7 +17,7 @@ A arquitetura implementada foi a seguinte:
 
 
 
-![Meta arquitetura](/home/acsantos/Documents/Facens_Architecture-for-Data-Processing/images/architecture.png)
+![Meta arquitetura](images/architecture.png)
 
 
 
@@ -29,7 +29,7 @@ Para este projeto a principal fonte de dados utilizada, trata-se de uma API púb
 
 
 
-![Retorno API](/home/acsantos/Documents/Facens_Architecture-for-Data-Processing/images/steam_api_json_return.png)
+![Retorno API](images/steam_api_json_return.png)
 
 
 
@@ -37,9 +37,7 @@ A API requer como parâmetro o "appid" do game que se deseja obter as informaç�
 
 
 
-Dataset disponível em: 
-
-[]: https://www.kaggle.com/datasets/najzeko/steam-reviews-2021	"Steam Reviews Dataset 2021"
+Dataset disponível em: https://www.kaggle.com/datasets/najzeko/steam-reviews-2021
 
 
 
@@ -47,7 +45,7 @@ A primeira etapa do trabalho foi carregar todos esses registros para o bucket, n
 
 
 
-![](/home/acsantos/Documents/Facens_Architecture-for-Data-Processing/images/minio/csv_ingestion.png)
+![](images/minio/csv_ingestion.png)
 
 
 
@@ -59,13 +57,13 @@ Desta forma identificou-se que no dataset haviam 65.580 possíveis jogos. Observ
 
 
 
-![](/home/acsantos/Documents/Facens_Architecture-for-Data-Processing/images/minio/csv_partition.png)
+![](images/minio/csv_partition.png)
 
 
 
 Os dados ficaram organizados da seguinte forma neste bucket.
 
-![](/home/acsantos/Documents/Facens_Architecture-for-Data-Processing/images/minio/appid_on_silver.png)
+![](images/minio/appid_on_silver.png)
 
 
 

@@ -12,7 +12,7 @@ def json_serializer(data):
     return json.dumps(data).encode('utf-8')
 
 # Instances the Kafka Producer passing the IP of cluster
-producer = KafkaProducer(bootstrap_servers=['localhost:9092'], value_serializer=lambda v: json.dumps(v).encode('utf-8'))
+producer = KafkaProducer(bootstrap_servers=['localhost:9092'], value_serializer=lambda v: json.dumps(v).encode('utf-8-sig'))
 
 if __name__ == '__main__':
     while True:
@@ -23,11 +23,10 @@ if __name__ == '__main__':
             for review in reviews_list:
                 print(review)
                 producer.send(topic='steam', value=review)
-                #time.sleep(10)
-                pass
+                time.sleep(1)
 
             update_last_review(review['appid'], review['recommendationid'])
 
         else:
             print('Nenhum review novo.')
-            time.sleep(600)
+            time.sleep(60)

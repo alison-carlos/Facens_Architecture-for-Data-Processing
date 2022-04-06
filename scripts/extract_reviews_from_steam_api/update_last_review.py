@@ -5,7 +5,7 @@ from credentials import credentials
 
 credentials = credentials()
 
-def update_last_review(game_id=None, last_review_retrieved=None):
+def update_last_review(game_id=None, game_name=None, last_review_retrieved=None):
 
     username = urllib.parse.quote_plus(credentials['username'])
     password = urllib.parse.quote_plus(credentials['password'])
@@ -20,9 +20,13 @@ def update_last_review(game_id=None, last_review_retrieved=None):
         games = db.games
         
         document = {'appid' : game_id}
-        update_query = {'$set' : {'last_review_retrieved' : last_review_retrieved}}
 
-        games.update_one(document, update_query)
+        if game_name is not None:
+            update_query = {'$set' : {'last_review_retrieved' : last_review_retrieved, 'name' : game_name}}
+            games.update_one(document, update_query)
+        else:
+            update_query = {'$set' : {'last_review_retrieved' : last_review_retrieved}}
+            games.update_one(document, update_query)
 
         return 'Update completed with success!'
 

@@ -53,7 +53,7 @@ Após isso, foi aplicado um Spark job para levar os dados para a camada Silver, 
 
 
 
-Desta forma identificou-se que no dataset haviam 65.580 possíveis jogos. Observou-se também uma redução significativa no volume dos dados.
+Desta forma identificou-se inicialmente que no dataset havia 65.580 potenciais jogos. Observou-se também uma redução significativa no volume dos dados.
 
 
 
@@ -64,6 +64,32 @@ Desta forma identificou-se que no dataset haviam 65.580 possíveis jogos. Observ
 Os dados ficaram organizados da seguinte forma neste bucket.
 
 ![](images/minio/appid_on_silver.png)
+
+
+
+Após isso, foi realizado um mapeamento dos nomes e dos id's de recomendação localizados na base, toda essa informação foi disponibilizada em uma coleção no MongoDB.
+
+
+
+Desta forma é possível ter alguns meta dados sobre os dados armazenamos no bucket.
+
+
+
+![](images/metadata.png)
+
+
+
+Realizado este mapeamento a próxima etapa foi filtrar os jogos de interesse para levar para a bucket Gold, onde os dados estão na formatação final desejada.
+
+
+
+Foram selecionados inicialmente 320 jogos para serem enviados a camada Gold e iniciar o processo de coleta de dados via API.
+
+
+
+![](images/minio/bucket_gold.png)
+
+
 
 
 

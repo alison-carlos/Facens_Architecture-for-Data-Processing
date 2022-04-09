@@ -106,7 +106,7 @@ Após isso o Kafka será responsável por publicar os dados coletados no tópico
 
 Este projeto utilizou o CMAK (Cluster Manager for Apache Kafka) para ter uma interface gráfica que facilitar a criação de cluster e tópicos no Kafka.
 
-![Interface CMAK](/home/acsantos/Documents/Facens_Architecture-for-Data-Processing/images/cmak/cmak_interface.png)
+![Interface CMAK](images/cmak/cmak_interface.png)
 
 O CMAK também fornece diversas metricas e funcionalidades que auxiliam muito na criação e manutenção dos tópicos.
 

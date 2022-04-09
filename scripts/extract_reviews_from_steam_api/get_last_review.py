@@ -16,8 +16,6 @@ def get_reviews_for_each_game(appid=None):
     CONNECTION_STRING = f'mongodb://{username}:{password}@localhost:27017/steam'
     client = MongoClient(CONNECTION_STRING)
 
-
-
     with client:
             db = client.steam
 
@@ -26,7 +24,7 @@ def get_reviews_for_each_game(appid=None):
 
             else:
                 print(f'Iniciando busca dos reviews do appid: {appid}')
-                games = db.games.find({'appid' : "1015500"})
+                games = db.games.find({'appid' : appid})
 
             for game in games:
 
@@ -38,3 +36,6 @@ def get_reviews_for_each_game(appid=None):
                 reviews_list = extract_reviews(appid, last_review_retrieved)
                 
     return reviews_list
+
+
+get_reviews_for_each_game('1017900')

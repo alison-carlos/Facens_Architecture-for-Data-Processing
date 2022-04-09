@@ -6,6 +6,7 @@ from update_last_review import update_last_review
 from credentials import credentials
 import time 
 import logging
+from collections import Counter
 
 #Configurações de log
 logging.basicConfig(
@@ -57,6 +58,8 @@ def get_review_updates_for_app_id(app_id, most_recent_review_id=None):
     found_last_new_comment = False
     cursor = None
 
+    cursor_processed = list()
+
     while should_make_request:
         response = get_app_reviews_from_steam(app_id, cursor)
         cursor = extract_cursor_from_response(response)
@@ -65,12 +68,21 @@ def get_review_updates_for_app_id(app_id, most_recent_review_id=None):
 
             if int(review[RECOMMENDATION_ID]) == most_recent_review_id:
                 found_last_new_comment = True
-                print(found_last_new_comment)
                 break
+
             else:
                 logging.info(review)
                 reviews_to_process.append(review)
-        should_make_request = cursor is not None and len(cursor) > 0 and found_last_new_comment == False #(not found_last_new_comment)
+
+        should_make_request = cursor is not None and len(cursor) > 0 and (not found_last_new_comment)
+
+        # Caso não seja localizado o ultimo review, ele verifica se o cursor está em loop
+        cursor_processed.append(cursor)
+        cursor_counter = Counter(cursor_processed)
+        if cursor_counter[cursor] == 2:
+            logging.info(f'O maior review ID não foi localizado na requisição, para evitar loop o processo parou quando o cursor comecou a se repetir.')
+            logging.info(f'Cursor: {cursor}')
+            should_make_request = False
        
     return reviews_to_process
     

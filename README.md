@@ -92,7 +92,7 @@ Foram selecionados inicialmente 320 jogos para serem enviados a camada Gold e in
 
 # Fase 2 - Ingestão em batch de novos reviews
 
-Após a coleta e tratamento do dataset inicial do projeto, a segunda etapa foi implementar a arquitetura responsavel por coletar os novos reviews do jogos, a partir do ultimo ID identificado anteriormente para os jogos que foram enviados até a camada Gold.
+Após a coleta e tratamento do dataset inicial do projeto, a segunda etapa foi implementar a arquitetura responsável por coletar os novos reviews do jogos, a partir do ultimo ID identificado anteriormente para os jogos que foram enviados até a camada Gold.
 
 ## Kafka
 
@@ -100,6 +100,15 @@ Neste projeto a coleta de review foi implementada com a ferramenta Apache Kafka.
 
 ![Ingestão com Kafka](images/kafka_process.png)
 
+Portanto a ingestão dos dados da API irá ocorrer da seguinte forma, por meio do Apache Kafka, será realizado a leitura do ultimo review coletado, para cada jogo presente na camada Gold.
+
+Após isso o Kafka será responsável por publicar os dados coletados no tópico "steam".
+
+Este projeto utilizou o CMAK (Cluster Manager for Apache Kafka) para ter uma interface gráfica que facilitar a criação de cluster e tópicos no Kafka.
+
+![Interface CMAK](/home/acsantos/Documents/Facens_Architecture-for-Data-Processing/images/cmak/cmak_interface.png)
+
+O CMAK também fornece diversas metricas e funcionalidades que auxiliam muito na criação e manutenção dos tópicos.
 
 
 

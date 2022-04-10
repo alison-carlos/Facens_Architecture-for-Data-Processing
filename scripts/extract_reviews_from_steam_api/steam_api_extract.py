@@ -5,6 +5,16 @@ import urllib.parse
 from update_last_review import update_last_review
 from credentials import credentials
 import time 
+import logging
+from collections import Counter
+
+#Configurações de log
+logging.basicConfig(
+    format='%(asctime)s %(levelname)-8s %(message)s',
+    filename='./logs/steam_api_extract/reviews_extraction_' + time.strftime('%Y%m%d-%H%M%S') +'.log',
+    level=logging.DEBUG,
+    datefmt='%Y%m%d-%H%M%S'
+)
 
 credentials = credentials()
 
@@ -40,22 +50,40 @@ def extract_cursor_from_response(response):
         return None
 
 def get_review_updates_for_app_id(app_id, most_recent_review_id=None):
+
+    logging.info(f'Iniciando busca de reviews do appid: {app_id}')  
+
     reviews_to_process = []
     should_make_request = True
     found_last_new_comment = False
     cursor = None
 
+    cursor_processed = list()
+
     while should_make_request:
         response = get_app_reviews_from_steam(app_id, cursor)
         cursor = extract_cursor_from_response(response)
+
         for review in response[REVIEWS_KEY]:
-            if review[RECOMMENDATION_ID] == most_recent_review_id:
+
+            if int(review[RECOMMENDATION_ID]) == most_recent_review_id:
                 found_last_new_comment = True
                 break
+
             else:
+                logging.info(review)
                 reviews_to_process.append(review)
+
         should_make_request = cursor is not None and len(cursor) > 0 and (not found_last_new_comment)
-    
+
+        # Caso não seja localizado o ultimo review, ele verifica se o cursor está em loop
+        cursor_processed.append(cursor)
+        cursor_counter = Counter(cursor_processed)
+        if cursor_counter[cursor] == 2:
+            logging.info(f'O maior review ID não foi localizado na requisição, para evitar loop o processo parou quando o cursor comecou a se repetir.')
+            logging.info(f'Cursor: {cursor}')
+            should_make_request = False
+       
     return reviews_to_process
     
 

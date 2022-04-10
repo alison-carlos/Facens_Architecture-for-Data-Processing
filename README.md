@@ -41,11 +41,11 @@ Dataset disponível em: https://www.kaggle.com/datasets/najzeko/steam-reviews-20
 
 
 
-A primeira etapa do trabalho foi carregar todos esses registros para o bucket, na camada Bronze (ingestão)
+A primeira etapa do trabalho foi carregar todos esses registros para o bucket, na camada Bronze (ingestão).
 
 
 
-![](images/minio/csv_ingestion.png)
+![Ingestão do dataset base em .csv](images/minio/csv_ingestion.png)
 
 
 
@@ -57,13 +57,13 @@ Desta forma identificou-se inicialmente que no dataset havia 65.580 potenciais j
 
 
 
-![](images/minio/csv_partition.png)
+![Dados do dataset convertidos para .parquet na camada Silver](images/minio/csv_partition.png)
 
 
 
 Os dados ficaram organizados da seguinte forma neste bucket.
 
-![](images/minio/appid_on_silver.png)
+![Exibindo organização dos arquivos na camada Silver](images/minio/appid_on_silver.png)
 
 
 
@@ -75,7 +75,7 @@ Desta forma é possível ter alguns meta dados sobre os dados armazenamos no buc
 
 
 
-![](images/metadata.png)
+![Metadados dos jogos no MongoDB](images/metadata.png)
 
 
 
@@ -87,7 +87,36 @@ Foram selecionados inicialmente 320 jogos para serem enviados a camada Gold e in
 
 
 
-![](images/minio/bucket_gold.png)
+![Exibindo organização dos arquivos na camada Silver](images/minio/bucket_gold.png)
+
+
+# Fase 2 - Ingestão em batch de novos reviews
+
+Após a coleta e tratamento do dataset inicial do projeto, a segunda etapa foi implementar a arquitetura responsável por coletar os novos reviews do jogos, a partir do ultimo ID identificado anteriormente para os jogos que foram enviados até a camada Gold.
+
+## Kafka
+
+Neste projeto a coleta de review foi implementada com a ferramenta Apache Kafka. 
+
+![Ingestão com Kafka](images/kafka_process.png)
+
+Portanto a ingestão dos dados da API irá ocorrer da seguinte forma, por meio do Apache Kafka, será realizado a leitura do ultimo review coletado, para cada jogo presente na camada Gold.
+
+Após isso o Kafka será responsável por publicar os dados coletados no tópico "steam".
+
+Este projeto utilizou o CMAK (Cluster Manager for Apache Kafka) para ter uma interface gráfica que facilitar a criação de cluster e tópicos no Kafka.
+
+![Interface CMAK](images/cmak/cmak_interface.png)
+
+O CMAK também fornece diversas metricas e funcionalidades que auxiliam muito na criação e manutenção dos tópicos.
+
+É possível vizualizar o volume de dados que estão sendo produzidos:
+
+![Kafka Producer](images/gifs/kafka/kafka1.gif)
+
+Neste projeto foi configurado um conector do Apache Kafka com o bucket Minio, desta forma é possível ver o volumes de dados que foram consumidos.
+
+![Kafka Consumer](images/gifs/kafka/kafka2.gif)
 
 
 

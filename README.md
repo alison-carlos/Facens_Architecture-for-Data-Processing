@@ -110,6 +110,14 @@ Este projeto utilizou o CMAK (Cluster Manager for Apache Kafka) para ter uma int
 
 O CMAK também fornece diversas metricas e funcionalidades que auxiliam muito na criação e manutenção dos tópicos.
 
+É possível vizualizar o volume de dados que estão sendo produzidos:
+
+![Kafka Producer](images/gifs/kafka/kafka1.gif)
+
+Neste projeto foi configurado um conector do Apache Kafka com o bucket Minio, desta forma é possível ver o volumes de dados que foram consumidos.
+
+![Kafka Consumer](images/gifs/kafka/kafka2.gif)
+
 
 
 

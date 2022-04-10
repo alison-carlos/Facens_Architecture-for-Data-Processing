@@ -5,3 +5,5 @@ scripts/extract_reviews_from_steam_api/__pycache__/
 *.ipynb_checkpoints*
 
 logs/
+
+__pycache__

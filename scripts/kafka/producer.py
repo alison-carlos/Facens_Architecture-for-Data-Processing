@@ -10,6 +10,7 @@ from steam_api_extract import update_last_review
 
 sys.path.append('/home/acsantos/Documents/Facens_Architecture-for-Data-Processing/scripts/minio')
 from list_games import fn_get_games_in_gold_layer
+from convert_to_json import convert_to_json
 
 def json_serializer(data):
     return json.dumps(data).encode('utf-8')
@@ -31,7 +32,8 @@ if __name__ == '__main__':
             for review in reviews_list:
                 recommendationid = int(review['recommendationid']) if int(review['recommendationid']) > recommendationid else recommendationid
                 producer.send(topic='steam', value=review)
-                
+                convert_to_json() # Converte o arquivo .bin em .json no bucket
+
             update_last_review(game_id=appid, last_review_retrieved=recommendationid)
 
         else:

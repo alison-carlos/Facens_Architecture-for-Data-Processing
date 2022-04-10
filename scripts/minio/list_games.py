@@ -12,6 +12,9 @@ client = Minio(host, access_key=access_key,
                     secret_key=secret_key, secure=False)
 
 def fn_get_games_in_gold_layer():
+    '''
+    Retorna uma lista com todos os 'appid' localizados no Bucket Gold.
+    '''
 
     # List objects information whose names starts with "steam".
     objects = client.list_objects("gold", prefix="/steam_reviews/reviews.parquet/")

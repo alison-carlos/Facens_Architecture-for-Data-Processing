@@ -21,7 +21,7 @@ if __name__ == '__main__':
 
     list_appid = fn_get_games_in_gold_layer()
 
-    for appid in list_appid[:2]:
+    for appid in list_appid[:3]:
 
         reviews_list = get_reviews_for_game(appid)
         
@@ -31,7 +31,7 @@ if __name__ == '__main__':
             for review in reviews_list:
                 recommendationid = int(review['recommendationid']) if int(review['recommendationid']) > recommendationid else recommendationid
                 producer.send(topic='steam', value=review)
-            
+                
             update_last_review(game_id=appid, last_review_retrieved=recommendationid)
 
         else:

@@ -126,6 +126,7 @@ def load_config(spark_context: SparkContext):
 load_config(spark.sparkContext)
 
 
+
 reviews_schema = StructType(
     [StructField("_c0", IntegerType(), False),
      StructField("app_id", IntegerType(), False),
@@ -150,11 +151,11 @@ reviews_schema = StructType(
      StructField("author.playtime_at_review", IntegerType(), False),
      StructField("author.last_played", IntegerType(), False)])
 
-
-# Recupera lista de jogos presentes na camada Gold.
 app_id = fn_get_games_in_gold_layer()
 
-for appid in app_id:
+
+for appid in app_id[:5]:
+
     #1º Busca as informações na camada silver.
     prefix = '/steam_reviews/reviews.parquet/app_id=' + str(appid) + '/'
     game_info = get_silver_layer_metadata(prefix)
@@ -172,15 +173,9 @@ for appid in app_id:
             df = spark.read.parquet('s3a://silver/' + game['silverPath'], multiLine=True, header=True, schema=reviews_schema) 
             df = df.withColumn("appid", lit(game['appid']))
 
-            df2 = df.select('appid', 'recommendationid', 'language', 'steamid',\
-                            'playtime_last_two_weeks', 'num_games_owned', 'playtime_forever',\
-                            'review', 'votes_up', 'votes_funny', 'timestamp_created')
-
+            df2 = df.select('appid', 'recommendationid', 'language', 'steamid','playtime_last_two_weeks', 'num_games_owned', 'playtime_forever','review', 'votes_up', 'votes_funny', 'timestamp_created')
 
             df2.write.partitionBy('appid').mode('append').parquet('s3a://gold/steam_reviews/reviews.parquet')
 
             # Atualiza os metadados, adicionando os paths dos arquivos processados.
-            update_path_list(appid, game['silverPath'])
-   
-    break
-    
+            update_path_list(appid, game['silverPath']) 

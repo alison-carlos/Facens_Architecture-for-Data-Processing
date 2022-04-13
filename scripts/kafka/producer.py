@@ -22,7 +22,7 @@ if __name__ == '__main__':
 
     list_appid = fn_get_games_in_gold_layer()
 
-    for appid in list_appid[:3]:
+    for appid in list_appid[:5]:
 
         reviews_list = get_reviews_for_game(appid)
         

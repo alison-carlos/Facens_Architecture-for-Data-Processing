@@ -8,6 +8,13 @@ from airflow.models import taskinstance, variable
 from datetime import datetime, timedelta
 import sys, os
 
+sys.path.append('/home/acsantos/Documents/Facens_Architecture-for-Data-Processing/scripts/kafka')
+from producer import fn_start_producer
+
+sys.path.append('/home/acsantos/Documents/Facens_Architecture-for-Data-Processing/scripts/spark/api')
+from p_from_bronze_to_silver import fn_move_from_bronze_to_silver
+from p_from_silver_to_gold import fn_move_from_silver_to_gold
+
 default_args = {
     'owner' : 'airflow',
     'start_date' : datetime(2022, 4, 10),
@@ -22,27 +29,21 @@ dag = DAG(
     catchup=False
 )
 
-command = f"""python3 /home/acsantos/Documents/Facens_Architecture-for-Data-Processing/scripts/kafka/producer.py"""
-
-t_extract_reviews = BashOperator(
+t_extract_reviews = PythonOperator(
     task_id='t_extract_reviews',
-    bash_command=command,
+    python_callable=fn_start_producer,
     dag=dag
 )
 
-command = f"""python3 /home/acsantos/Documents/Facens_Architecture-for-Data-Processing/scripts/spark/api/1_from_bronze_to_silver.py"""
-
-t_move_to_silver = BashOperator(
+t_move_to_silver = PythonOperator(
     task_id='t_move_to_silver',
-    bash_command=command,
+    python_callable=fn_move_from_bronze_to_silver,
     dag=dag
 )
 
-command = f"""python3 /home/acsantos/Documents/Facens_Architecture-for-Data-Processing/scripts/spark/api/2_from_silver_to_gold.py"""
-
-t_move_to_gold = BashOperator(
+t_move_to_gold = PythonOperator(
     task_id='t_move_to_gold',
-    bash_command=command,
+    python_callable=fn_move_from_silver_to_gold,
     dag=dag
 )
 # Task sequence

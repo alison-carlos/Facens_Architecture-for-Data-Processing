@@ -11,7 +11,7 @@ from collections import Counter
 #Configurações de log
 logging.basicConfig(
     format='%(asctime)s %(levelname)-8s %(message)s',
-    filename='./logs/steam_api_extract/reviews_extraction_' + time.strftime('%Y%m%d-%H%M%S') +'.log',
+    filename='/home/acsantos/Documents/Facens_Architecture-for-Data-Processing/logs/steam_api_extract/reviews_extraction_' + time.strftime('%Y%m%d-%H%M%S') +'.log',
     level=logging.DEBUG,
     datefmt='%Y%m%d-%H%M%S'
 )
@@ -66,7 +66,7 @@ def get_review_updates_for_app_id(app_id, most_recent_review_id=None):
 
         for review in response[REVIEWS_KEY]:
 
-            if int(review[RECOMMENDATION_ID]) == most_recent_review_id:
+            if int(review[RECOMMENDATION_ID]) <= most_recent_review_id:
                 found_last_new_comment = True
                 break
 

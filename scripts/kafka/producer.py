@@ -4,6 +4,17 @@ import time
 import sys
 import io
 
+import time 
+import logging
+
+#Configurações de log
+logging.basicConfig(
+    format='%(asctime)s %(levelname)-8s %(message)s',
+    filename='/home/acsantos/Documents/Facens_Architecture-for-Data-Processing/logs/kafka/producer_' + time.strftime('%Y%m%d-%H%M%S') +'.log',
+    level=logging.DEBUG,
+    datefmt='%Y%m%d-%H%M%S'
+)
+
 sys.path.append('/home/acsantos/Documents/Facens_Architecture-for-Data-Processing/scripts/extract_reviews_from_steam_api')
 from get_last_review import get_reviews_for_game
 from steam_api_extract import update_last_review
@@ -18,11 +29,14 @@ def json_serializer(data):
 # Instances the Kafka Producer passing the IP of cluster
 producer = KafkaProducer(bootstrap_servers=['localhost:9092'], value_serializer=lambda v: json.dumps(v).encode('utf-8-sig'))
 
-if __name__ == '__main__':
+#if __name__ == '__main__':
 
+def fn_start_producer():
+
+    logging.info(f'Iniciando processo.')  
     list_appid = fn_get_games_in_gold_layer()
 
-    for appid in list_appid[:3]:
+    for appid in list_appid[:15]:
 
         reviews_list = get_reviews_for_game(appid)
         
@@ -38,3 +52,5 @@ if __name__ == '__main__':
 
         else:
             print('Nenhum review novo.')
+    
+    return 0

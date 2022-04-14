@@ -41,6 +41,10 @@ Dataset disponível em: https://www.kaggle.com/datasets/najzeko/steam-reviews-20
 
 
 
+# Fase 1 - Ingestão do dataset 
+
+
+
 A primeira etapa do trabalho foi carregar todos esses registros para o bucket, na camada Bronze (ingestão).
 
 
@@ -94,6 +98,8 @@ Foram selecionados inicialmente 320 jogos para serem enviados a camada Gold e in
 
 Após a coleta e tratamento do dataset inicial do projeto, a segunda etapa foi implementar a arquitetura responsável por coletar os novos reviews do jogos, a partir do ultimo ID identificado anteriormente para os jogos que foram enviados até a camada Gold.
 
+
+
 ## Kafka
 
 Neste projeto a coleta de review foi implementada com a ferramenta Apache Kafka. 
@@ -120,9 +126,23 @@ Neste projeto foi configurado um conector do Apache Kafka com o bucket Minio, de
 
 
 
+## Minio
 
 
 
+Todos esses dados coletados foram armazenamos no Object Storage MiniO, neste projeto foi implementado uma arquitetura de bucket similiar ao que existe no Deltalake da Databricks.
+
+
+
+![Esboço das camadas no minio](images/minio/minio.png)
+
+
+
+Após implementado, ficou desta forma:
+
+
+
+![Minio Buckets](images/minio/minio-buckets.png)
 
 
 

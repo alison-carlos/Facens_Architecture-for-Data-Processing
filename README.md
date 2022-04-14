@@ -146,3 +146,131 @@ Após implementado, ficou desta forma:
 
 
 
+## Spark
+
+
+
+Após o Kafka realizar a ingestão e disponibilizar os dados na camada Bronze, o pipeline avança para o processamento destes dados com o Spark.
+
+
+
+Para essa etapa foram desenvolvidas 2 funcões, nomeadas de "fn_move_from_bronze_to_silver" e "fn_move_from_silver_to_gold".
+
+
+
+Na função "fn_move_from_bronze_to_silver" o objetivo é realizar a leitura de todos os reviews que foram ingeridos (e estão na camada bronze), após isso foi aplicado uma conversão nos campos de data, remoção dos duplicados e renomeado a coluna appid, após esses tratamentos os dados são enfim salvos na camada bronze particionados por app_id e no formato .parquet
+
+
+
+~~~python
+def fn_move_from_bronze_to_silver():
+
+  try:
+    logging.info(f'Iniciando leitura dos dados na camada Bronze.')  
+    df = spark.read.json('s3a://bronze/topics/steam/*', multiLine=True)
+
+    logging.info(f'Convertendo colunas de timestamp para datetime.')
+    df.withColumn('last_played', f.date_format(df.last_played.cast(dataType=t.TimestampType()), "yyyy-MM-dd")) \
+      .withColumn('timestamp_created', f.date_format(df.timestamp_created.cast(dataType=t.TimestampType()), "yyyy-MM-dd")) \
+      .withColumn('timestamp_updated', f.date_format(df.timestamp_updated.cast(dataType=t.TimestampType()), "yyyy-MM-dd"))
+
+    df2 = df.withColumn('last_played', f.to_date(df.last_played.cast(dataType=t.TimestampType()))) \
+            .withColumn('timestamp_created', f.to_date(df.timestamp_created.cast(dataType=t.TimestampType()))) \
+            .withColumn('timestamp_updated', f.to_date(df.timestamp_updated.cast(dataType=t.TimestampType())))
+
+    df2 = df2.withColumn("last_played",f.to_timestamp(df2['last_played'])) \
+            .withColumn("timestamp_created",f.to_timestamp(df2['timestamp_created'])) \
+            .withColumn("timestamp_updated",f.to_timestamp(df2['timestamp_updated']))
+
+    logging.info(f'Removendo registros duplicados.')
+    df3 = df2.drop_duplicates()
+    logging.info(f'Renomeando coluna appid para app_id')
+    df3 = df3.withColumnRenamed('appid', 'app_id')
+    logging.info(f'Enviando dados tratados para camada Silver')
+    df3.write.partitionBy('app_id').mode('append').parquet('s3a://silver/steam_reviews/reviews.parquet')
+
+    logging.info(f'Movendo arquivos lidos para bucket de processados')
+    fn_move_files(bucket='bronze', sourcePath='topics/steam/partition=0/', destinationPath='processed_files/steam/')
+
+  except Exception as e:
+    logging.info(f'Error {e}')
+    print('Processo sendo encerrado.')
+    pass
+
+  return 0
+~~~
+
+
+
+
+
+Após isso a segunda função a ser chamada é a "fn_move_from_silver_to_gold"
+
+Seu objetivo é tranportar para a camada gold apenas os novos reviews dos jogos que já foram mapeados para a camada gold.
+
+Como mencionado anteriormente, neste projeto foi escolhido em torno de 320 jogos para serem enviados a camada gold e receberem constantemente novos reviews. 
+
+
+
+Nesta função existe um processo de verificar quais arquivos já foram importados (está informação é buscada nos metadados que estão no MongoDB)
+
+Então é feito um cruzamento de todos os arquivos que estão na camada silver x arquivos que foram processados, assim o processo somente irá levar para a Gold os novos.
+
+
+
+Após a implementação a função ficou assim:
+
+
+
+~~~pyt
+def fn_move_from_silver_to_gold():
+
+    app_id = fn_get_games_in_gold_layer()
+
+    for appid in app_id:
+        #1º Busca as informações na camada silver.
+        prefix = '/steam_reviews/reviews.parquet/app_id=' + str(appid) + '/'
+        game_info = get_silver_layer_metadata(prefix)
+        
+        #2º Busca quais são os arquivos já processados.
+        path_processed_files = get_mongodb_metadata(appid)
+        
+        for path in path_processed_files:
+            for index, game in enumerate(game_info):
+                game_info.pop(index) if path in game['silverPath'] else None
+            
+        #4º Iniciando leitura dos dados e envio para camada Gold.
+        if len(game_info) > 0:
+            for game in game_info:
+                df = spark.read.parquet('s3a://silver/' + game['silverPath'], multiLine=True, header=True, schema=reviews_schema) 
+
+                df = df.withColumn("appid", lit(game['appid']))
+
+                try:
+
+                    df2 = df.select('appid', 'recommendationid', 'language', 'steamid',\
+                    'playtime_last_two_weeks', 'num_games_owned', 'playtime_forever',\
+                    'review', 'votes_up', 'votes_funny', 'timestamp_created')
+
+                    df2.write.partitionBy('appid').mode('append').parquet('s3a://gold/steam_reviews/reviews.parquet')
+
+
+                except Exception as e:
+
+                    df.write.partitionBy('appid').mode('append').parquet('s3a://gold/steam_reviews/reviews.parquet')
+
+                finally:
+                    #Aualiza os metadados, adicionando os paths dos arquivos processados.
+                    update_path_list(appid, game['silverPath'])
+
+    return 0
+~~~
+
+
+
+
+
+
+
+
+

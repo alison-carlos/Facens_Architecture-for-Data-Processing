@@ -202,8 +202,6 @@ def fn_move_from_bronze_to_silver():
 
 
 
-
-
 Após isso a segunda função a ser chamada é a "fn_move_from_silver_to_gold"
 
 Seu objetivo é tranportar para a camada gold apenas os novos reviews dos jogos que já foram mapeados para a camada gold.
@@ -267,6 +265,20 @@ def fn_move_from_silver_to_gold():
 ~~~
 
 
+
+# Fase 3 - Orquestração
+
+
+
+Após o desenvolvimento e testes de todo o processo a etapa final é automatizar a execução destas rotinas, para isso foi desenvolvido uma DAG no Airflow que executa os 3 processo (extração dos reviews, enviado da bronze para silver, e da silver para gold)
+
+
+
+Visualmente a DAG ficou desta forma:
+
+
+
+![Airflow](images/airflow/orquestracao.png)
 
 
 

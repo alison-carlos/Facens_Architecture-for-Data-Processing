@@ -8,7 +8,6 @@ Os códigos e comentários deste repositório se referem a parte prática do TCC
 
 
 
-
 # Arquitetura
 
 

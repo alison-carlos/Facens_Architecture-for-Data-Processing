@@ -29,14 +29,12 @@ def json_serializer(data):
 # Instances the Kafka Producer passing the IP of cluster
 producer = KafkaProducer(bootstrap_servers=['localhost:9092'], value_serializer=lambda v: json.dumps(v).encode('utf-8-sig'))
 
-#if __name__ == '__main__':
-
 def fn_start_producer():
 
     logging.info(f'Iniciando processo.')  
     list_appid = fn_get_games_in_gold_layer()
 
-    for appid in list_appid[:15]:
+    for appid in list_appid:
 
         reviews_list = get_reviews_for_game(appid)
         
@@ -46,11 +44,15 @@ def fn_start_producer():
             for review in reviews_list:
                 recommendationid = int(review['recommendationid']) if int(review['recommendationid']) > recommendationid else recommendationid
                 producer.send(topic='steam', value=review)
-                convert_to_json() # Converte o arquivo .bin em .json no bucket
-
+                #convert_to_json() # Converte o arquivo .bin em .json no bucket
+                
             update_last_review(game_id=appid, last_review_retrieved=recommendationid)
 
         else:
             print('Nenhum review novo.')
     
     return 0
+
+
+if __name__ == '__main__':
+    fn_start_producer()

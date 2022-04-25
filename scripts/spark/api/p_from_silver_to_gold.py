@@ -165,7 +165,7 @@ def fn_move_from_silver_to_gold():
 
     app_id = fn_get_games_in_gold_layer()
 
-    for appid in app_id[:15]:
+    for appid in app_id:
         #1º Busca as informações na camada silver.
         prefix = '/steam_reviews/reviews.parquet/app_id=' + str(appid) + '/'
         game_info = get_silver_layer_metadata(prefix)

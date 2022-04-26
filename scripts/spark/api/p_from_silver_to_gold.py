@@ -166,22 +166,21 @@ def fn_move_from_silver_to_gold():
     app_id = fn_get_games_in_gold_layer()
 
     for appid in app_id:
+
+        print(f'Processando appid: {appid}')
+        
         #1º Busca as informações na camada silver.
         prefix = '/steam_reviews/reviews.parquet/app_id=' + str(appid) + '/'
         game_info = get_silver_layer_metadata(prefix)
+
+        print(game_info)
         
-        #2º Busca quais são os arquivos já processados.
-        path_processed_files = get_mongodb_metadata(appid)
-        
-        for path in path_processed_files:
-            for index, game in enumerate(game_info):
-                game_info.pop(index) if path in game['silverPath'] else None
-            
         #4º Iniciando leitura dos dados e envio para camada Gold.
         if len(game_info) > 0:
-            for game in game_info:
-                df = spark.read.parquet('s3a://silver/' + game['silverPath'], multiLine=True, header=True, schema=reviews_schema) 
 
+            for game in game_info:
+
+                df = spark.read.parquet(f's3a://silver/steam_reviews/reviews.parquet/app_id='+appid, multiLine=True, header=True, schema=reviews_schema) 
                 df = df.withColumn("appid", lit(game['appid']))
 
                 try:
@@ -192,13 +191,9 @@ def fn_move_from_silver_to_gold():
 
                     df2.write.partitionBy('appid').mode('append').parquet('s3a://gold/steam_reviews/reviews.parquet')
 
-
                 except Exception as e:
 
                     df.write.partitionBy('appid').mode('append').parquet('s3a://gold/steam_reviews/reviews.parquet')
 
-                finally:
-                    #Aualiza os metadados, adicionando os paths dos arquivos processados.
-                    update_path_list(appid, game['silverPath'])
 
     return 0

@@ -66,10 +66,9 @@ def fn_move_from_bronze_to_silver():
     logging.info(f'Renomeando coluna appid para app_id')
     df3 = df3.withColumnRenamed('appid', 'app_id')
     logging.info(f'Enviando dados tratados para camada Silver')
-    df3.write.partitionBy('app_id').mode('append').parquet('s3a://silver/steam_reviews/reviews.parquet')
-
+    df3.write.partitionBy('app_id').mode('overwrite').parquet('s3a://silver/steam_reviews/reviews.parquet')
     logging.info(f'Movendo arquivos lidos para bucket de processados')
-    fn_move_files(bucket='bronze', sourcePath='topics/steam/partition=0/', destinationPath='processed_files/steam/')
+    fn_move_files(bucket='bronze', sourcePath='topics/steam/', destinationPath='processed_files/steam/')
 
   except Exception as e:
     logging.info(f'Error {e}')

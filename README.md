@@ -2,9 +2,9 @@
 
 
 
-O objetivo deste projeto é simular em uma escala reduzida a aplicação de tecnologias de Big Data para criação de uma repositório para Sistemas de Recomendação.
+O objetivo deste projeto é simular em menor escala a aplicação de tecnologias de Big Data para criação de uma arquitetura de processamento de dados.
 
-Os códigos e comentários deste repositório se referem a parte prática do TCC da pós gradução em Ciências de Dados pela Facens.
+Os códigos e comentários deste repositório se referem ao estudo de caso para o Trabalho de Conclução de Curso da Pós gradução em Ciências de Dados pela Facens.
 
 
 
@@ -12,7 +12,7 @@ Os códigos e comentários deste repositório se referem a parte prática do TCC
 
 
 
-A arquitetura implementada foi a seguinte:
+Para este projeto a arquitetura possui as sequintes camadas.
 
 
 
@@ -52,7 +52,7 @@ A primeira etapa do trabalho foi carregar todos esses registros para o bucket, n
 
 
 
-Após isso, foi aplicado um Spark job para levar os dados para a camada Silver, na qual foi aplicado um agrupamento dos dados por APPID e convertido para .parquet.
+Após isso, foi aplicado um Spark job para levar os dados para a camada Silver, na qual foi aplicado um agrupamento dos dados por APPID e convertido para ".parquet".
 
 
 
@@ -86,14 +86,17 @@ Realizado este mapeamento a próxima etapa foi filtrar os jogos de interesse par
 
 
 
-Foram selecionados inicialmente 320 jogos para serem enviados a camada Gold e iniciar o processo de coleta de dados via API.
+Foram selecionados inicialmente 320 jogos para serem enviados a camada Gold e iniciar o processo de coleta de novos reviews via API.
 
 
 
 ![Exibindo organização dos arquivos na camada Silver](images/minio/bucket_gold.png)
 
 
+
 # Fase 2 - Ingestão em batch de novos reviews
+
+
 
 Após a coleta e tratamento do dataset inicial do projeto, a segunda etapa foi implementar a arquitetura responsável por coletar os novos reviews do jogos, a partir do ultimo ID identificado anteriormente para os jogos que foram enviados até a camada Gold.
 
@@ -157,7 +160,7 @@ Para essa etapa foram desenvolvidas 2 funcões, nomeadas de "fn_move_from_bronze
 
 
 
-Na função "fn_move_from_bronze_to_silver" o objetivo é realizar a leitura de todos os reviews que foram ingeridos (e estão na camada bronze), após isso foi aplicado uma conversão nos campos de data, remoção dos duplicados e renomeado a coluna appid, após esses tratamentos os dados são enfim salvos na camada bronze particionados por app_id e no formato .parquet
+Na função "fn_move_from_bronze_to_silver" o objetivo é realizar a leitura de todos os reviews que foram ingeridos (e estão na camada bronze), após isso foi aplicado uma conversão nos campos de data, remoção dos duplicados e renomeado a coluna appid, após esses tratamentos os dados são enfim salvos na camada bronze particionados por app_id e no formato ".parquet"
 
 
 
@@ -186,10 +189,9 @@ def fn_move_from_bronze_to_silver():
     logging.info(f'Renomeando coluna appid para app_id')
     df3 = df3.withColumnRenamed('appid', 'app_id')
     logging.info(f'Enviando dados tratados para camada Silver')
-    df3.write.partitionBy('app_id').mode('append').parquet('s3a://silver/steam_reviews/reviews.parquet')
-
+    df3.write.partitionBy('app_id').mode('overwrite').parquet('s3a://silver/steam_reviews/reviews.parquet')
     logging.info(f'Movendo arquivos lidos para bucket de processados')
-    fn_move_files(bucket='bronze', sourcePath='topics/steam/partition=0/', destinationPath='processed_files/steam/')
+    fn_move_files(bucket='bronze', sourcePath='topics/steam/', destinationPath='processed_files/steam/')
 
   except Exception as e:
     logging.info(f'Error {e}')
@@ -203,15 +205,7 @@ def fn_move_from_bronze_to_silver():
 
 Após isso a segunda função a ser chamada é a "fn_move_from_silver_to_gold"
 
-Seu objetivo é tranportar para a camada gold apenas os novos reviews dos jogos que já foram mapeados para a camada gold.
-
-Como mencionado anteriormente, neste projeto foi escolhido em torno de 320 jogos para serem enviados a camada gold e receberem constantemente novos reviews. 
-
-
-
-Nesta função existe um processo de verificar quais arquivos já foram importados (está informação é buscada nos metadados que estão no MongoDB)
-
-Então é feito um cruzamento de todos os arquivos que estão na camada silver x arquivos que foram processados, assim o processo somente irá levar para a Gold os novos.
+Seu objetivo é tranportar para a camada gold apenas os novos reviews dos jogos que já foram disponibilizados na camada silver.
 
 
 
@@ -225,22 +219,21 @@ def fn_move_from_silver_to_gold():
     app_id = fn_get_games_in_gold_layer()
 
     for appid in app_id:
+
+        print(f'Processando appid: {appid}')
+        
         #1º Busca as informações na camada silver.
         prefix = '/steam_reviews/reviews.parquet/app_id=' + str(appid) + '/'
         game_info = get_silver_layer_metadata(prefix)
+
+        print(game_info)
         
-        #2º Busca quais são os arquivos já processados.
-        path_processed_files = get_mongodb_metadata(appid)
-        
-        for path in path_processed_files:
-            for index, game in enumerate(game_info):
-                game_info.pop(index) if path in game['silverPath'] else None
-            
         #4º Iniciando leitura dos dados e envio para camada Gold.
         if len(game_info) > 0:
-            for game in game_info:
-                df = spark.read.parquet('s3a://silver/' + game['silverPath'], multiLine=True, header=True, schema=reviews_schema) 
 
+            for game in game_info:
+
+                df = spark.read.parquet(f's3a://silver/steam_reviews/reviews.parquet/app_id='+appid, multiLine=True, header=True, schema=reviews_schema) 
                 df = df.withColumn("appid", lit(game['appid']))
 
                 try:
@@ -251,14 +244,10 @@ def fn_move_from_silver_to_gold():
 
                     df2.write.partitionBy('appid').mode('append').parquet('s3a://gold/steam_reviews/reviews.parquet')
 
-
                 except Exception as e:
 
                     df.write.partitionBy('appid').mode('append').parquet('s3a://gold/steam_reviews/reviews.parquet')
 
-                finally:
-                    #Aualiza os metadados, adicionando os paths dos arquivos processados.
-                    update_path_list(appid, game['silverPath'])
 
     return 0
 ~~~
@@ -283,5 +272,23 @@ Visualmente a DAG ficou desta forma:
 
 
 
+# Fase 4 - Visualização
 
+
+
+Por fim foi criado um pequeno dashboard afim de se ter uma visualização dos dados prontos para consumo.
+
+
+
+A montagem dos gráficos abaixo foi realizada com a ferramenta open source Grafana.
+
+
+
+![Dashboard - Distribuição das Avaliações](images/grafana/distribuicaoAvaliacoes.png)
+
+
+
+
+
+![Dashboard - Distribuição dos reviews](images/grafana/qtdReviews.png)
 
